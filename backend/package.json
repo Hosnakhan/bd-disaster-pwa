@@ -1,0 +1,25 @@
+{
+  "name": "bd-disaster-backend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "API, alert ingestion, donation reconciliation and WebRTC signaling for the Bangladesh Emergency Command Center PWA.",
+  "type": "module",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "lan:listen": "node scripts/lan-listen.mjs",
+    "check": "node --check server/index.js",
+    "dev:env": "node --env-file=.env --watch server/index.js"
+  },
+  "dependencies": {
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "socket.io": "^4.8.1"
+  },
+  "engines": {
+    "node": ">=20.11"
+  }
+}

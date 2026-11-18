@@ -1,0 +1,304 @@
+{
+ "meta": {
+  "demo": true
+ },
+ "hotspots": [
+  {
+   "id": "h-sunamganj",
+   "name": "DEMO: river overflow",
+   "district": "Sunamganj",
+   "upazila": "Sunamganj Sadar",
+   "lat": 25.0658,
+   "lon": 91.4073,
+   "severity": "danger",
+   "type": "flood",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-sylhet",
+   "name": "DEMO: low-lying areas flooded",
+   "district": "Sylhet",
+   "upazila": "Sylhet Sadar",
+   "lat": 24.8949,
+   "lon": 91.8687,
+   "severity": "warning",
+   "type": "flood",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-kurigram",
+   "name": "DEMO: char areas cut off",
+   "district": "Kurigram",
+   "upazila": "Kurigram Sadar",
+   "lat": 25.8054,
+   "lon": 89.6361,
+   "severity": "danger",
+   "type": "flood",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-gaibandha",
+   "name": "DEMO: embankment seepage",
+   "district": "Gaibandha",
+   "upazila": "Gaibandha Sadar",
+   "lat": 25.3297,
+   "lon": 89.543,
+   "severity": "warning",
+   "type": "embankment",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-sirajganj",
+   "name": "DEMO: erosion near river bank",
+   "district": "Sirajganj",
+   "upazila": "Sirajganj Sadar",
+   "lat": 24.4534,
+   "lon": 89.7006,
+   "severity": "warning",
+   "type": "erosion",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-feni",
+   "name": "DEMO: waterlogging",
+   "district": "Feni",
+   "upazila": "Feni Sadar",
+   "lat": 23.0159,
+   "lon": 91.3976,
+   "severity": "danger",
+   "type": "flood",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-coxs",
+   "name": "DEMO: landslide risk",
+   "district": "Cox's Bazar",
+   "upazila": "Cox's Bazar Sadar",
+   "lat": 21.4272,
+   "lon": 92.0058,
+   "severity": "warning",
+   "type": "landslide",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  },
+  {
+   "id": "h-bhola",
+   "name": "DEMO: tidal surge",
+   "district": "Bhola",
+   "upazila": "Bhola Sadar",
+   "lat": 22.6859,
+   "lon": 90.6482,
+   "severity": "caution",
+   "type": "surge",
+   "message": "Demo data, not an official warning.",
+   "updatedAt": null
+  }
+ ],
+ "camps": [
+  {
+   "id": "c-sun-1",
+   "name": "DEMO: Sunamganj Govt. High School shelter",
+   "district": "Sunamganj",
+   "upazila": "Sunamganj Sadar",
+   "lat": 25.0712,
+   "lon": 91.395,
+   "capacity": 400,
+   "occupancy": 310,
+   "status": "open",
+   "facilities": [
+    "water",
+    "food",
+    "medical",
+    "toilet"
+   ],
+   "phone": "+8801000000001",
+   "updatedAt": null
+  },
+  {
+   "id": "c-sun-2",
+   "name": "DEMO: Sunamganj Sadar flood center",
+   "district": "Sunamganj",
+   "upazila": "Sunamganj Sadar",
+   "lat": 25.0605,
+   "lon": 91.418,
+   "capacity": 250,
+   "occupancy": 250,
+   "status": "full",
+   "facilities": [
+    "water",
+    "toilet"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-syl-1",
+   "name": "DEMO: Sylhet cyclone shelter",
+   "district": "Sylhet",
+   "upazila": "Sylhet Sadar",
+   "lat": 24.905,
+   "lon": 91.855,
+   "capacity": 600,
+   "occupancy": 120,
+   "status": "open",
+   "facilities": [
+    "water",
+    "food",
+    "medical",
+    "toilet",
+    "power"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-syl-2",
+   "name": "DEMO: Sylhet Madrasa shelter",
+   "district": "Sylhet",
+   "upazila": "Sylhet Sadar",
+   "lat": 24.886,
+   "lon": 91.88,
+   "capacity": 200,
+   "occupancy": 40,
+   "status": "open",
+   "facilities": [
+    "water",
+    "toilet"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-kur-1",
+   "name": "DEMO: Kurigram Govt. College shelter",
+   "district": "Kurigram",
+   "upazila": "Kurigram Sadar",
+   "lat": 25.813,
+   "lon": 89.65,
+   "capacity": 500,
+   "occupancy": 420,
+   "status": "open",
+   "facilities": [
+    "water",
+    "food",
+    "medical"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-gai-1",
+   "name": "DEMO: Gaibandha primary school shelter",
+   "district": "Gaibandha",
+   "upazila": "Gaibandha Sadar",
+   "lat": 25.335,
+   "lon": 89.53,
+   "capacity": 300,
+   "occupancy": 90,
+   "status": "open",
+   "facilities": [
+    "water",
+    "toilet"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-sir-1",
+   "name": "DEMO: Sirajganj cyclone shelter",
+   "district": "Sirajganj",
+   "upazila": "Sirajganj Sadar",
+   "lat": 24.46,
+   "lon": 89.71,
+   "capacity": 450,
+   "occupancy": 200,
+   "status": "open",
+   "facilities": [
+    "water",
+    "food",
+    "toilet",
+    "power"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-fen-1",
+   "name": "DEMO: Feni Govt. school shelter",
+   "district": "Feni",
+   "upazila": "Feni Sadar",
+   "lat": 23.02,
+   "lon": 91.405,
+   "capacity": 350,
+   "occupancy": 350,
+   "status": "full",
+   "facilities": [
+    "water",
+    "food"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-fen-2",
+   "name": "DEMO: Feni college shelter",
+   "district": "Feni",
+   "upazila": "Feni Sadar",
+   "lat": 23.005,
+   "lon": 91.39,
+   "capacity": 300,
+   "occupancy": 60,
+   "status": "open",
+   "facilities": [
+    "water",
+    "medical",
+    "toilet"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-cox-1",
+   "name": "DEMO: Cox's Bazar cyclone shelter",
+   "district": "Cox's Bazar",
+   "upazila": "Cox's Bazar Sadar",
+   "lat": 21.44,
+   "lon": 91.99,
+   "capacity": 700,
+   "occupancy": 180,
+   "status": "open",
+   "facilities": [
+    "water",
+    "food",
+    "medical",
+    "toilet",
+    "power"
+   ],
+   "phone": null,
+   "updatedAt": null
+  },
+  {
+   "id": "c-bho-1",
+   "name": "DEMO: Bhola cyclone shelter",
+   "district": "Bhola",
+   "upazila": "Bhola Sadar",
+   "lat": 22.69,
+   "lon": 90.64,
+   "capacity": 500,
+   "occupancy": 0,
+   "status": "closed",
+   "facilities": [
+    "water",
+    "toilet"
+   ],
+   "phone": null,
+   "updatedAt": null
+  }
+ ]
+}

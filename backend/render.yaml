@@ -1,0 +1,37 @@
+# Render Blueprint (optional). Dashboard setup in DEPLOYMENT.md gives the same result.
+services:
+  - type: web
+    name: bd-disaster-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    # Persistent disks are not available on Render's free instance type. Without a disk, donation
+    # records and audit logs are lost on every deploy/restart, so do not run real donations without one.
+    plan: starter
+    disk:
+      name: bd-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATA_DIR
+        value: /var/data
+      - key: FRONTEND_URL
+        sync: false          # you enter this in the dashboard, e.g. https://your-app.vercel.app
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: IP_HASH_SALT
+        generateValue: true
+      - key: ALLOW_MOCK_ALERTS
+        value: "false"
+      - key: ALERT_SOURCE_URL
+        sync: false
+      - key: ALERT_SOURCE_TOKEN
+        sync: false

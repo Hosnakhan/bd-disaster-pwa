@@ -1,0 +1,234 @@
+/* Emergency Command Center map. Pure CSS (no Tailwind) so it can be reviewed and tested standalone.
+   Perf notes: animations use transform/opacity only (except the few SVG district pulses), no
+   backdrop-filter or large blurs (budget Android GPUs), and everything pauses while the map moves.
+
+   Colour system 60/30/10 (tokens live in index.css :root):
+     60% milk  : surfaces      30% brand #F76806 : actions, header bands, selected states      10% ink #101820 : text, outlines, map controls
+   Rules: text on brand is ALWAYS ink (5.9:1; milk/white on brand is 2.8-3.0:1). Brand is never used as text colour on milk (2.8:1).
+   Alert colours (danger/warning/caution/safe) are semantic, not brand: they keep their own hues and always carry a text label. */
+
+html, body, #root { height: 100%; }
+body { overscroll-behavior: none; }
+.cm-screen { height: 100vh; height: 100dvh; width: 100%; position: relative; }
+
+.cm-root {
+  --bg: #EDE7D8; --panel: var(--milk); --panel2: var(--milk-2); --line: var(--milk-line); --text: var(--ink); --muted: var(--ink-muted);
+  --ring: var(--ink);            /* selection ring on markers: ink on the light map, white on the dark map */
+  --good: #166534;               /* readable green for text on milk */
+  --shadow: 0 4px 14px rgba(16,24,32,.22);
+  --sheet-h: 0px;
+  position: relative; height: 100%; width: 100%; overflow: hidden;
+  background: var(--bg); color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, "Noto Sans Bengali", sans-serif;
+}
+.cm-root[data-theme="dark"] { --bg: #0b1520; --ring: #fff; }
+.cm-root button { font: inherit; cursor: pointer; }
+.cm-root button:focus-visible, .cm-root a:focus-visible, .cm-root [role="button"]:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; box-shadow: 0 0 0 5px var(--milk); }
+
+.cm-mapwrap { position: absolute; inset: 0; }
+.cm-map { height: 100%; width: 100%; background: var(--bg); font: inherit; -webkit-tap-highlight-color: transparent; }
+.cm-map .leaflet-tile { image-rendering: auto; }
+
+/* ---------- floating UI ---------- */
+.cm-top { position: absolute; z-index: 1000; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 8px; right: 8px;
+  display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.cm-row1 { display: flex; gap: 8px; align-items: stretch; pointer-events: none; }
+.cm-status, .cm-donate, .cm-toggle, .cm-btn, .cm-toast, .cm-hint { pointer-events: auto; }
+
+.cm-status { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 14px;
+  border-radius: 14px; background: var(--milk); color: var(--ink); border: 2px solid var(--ink); box-shadow: var(--shadow); }
+.cm-status-dot { --c: #94a3b8; width: 11px; height: 11px; border-radius: 50%; background: var(--c); flex: none; box-shadow: 0 0 0 2px var(--milk), 0 0 0 3px var(--ink); }
+.cm-status[data-tone="live"] .cm-status-dot { --c: #22c55e; animation: cm-blink 1.8s ease-in-out infinite; }
+.cm-status[data-tone="warn"] .cm-status-dot { --c: #f59e0b; }
+.cm-status-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.cm-status-text b { font-size: 13px; letter-spacing: .05em; text-transform: uppercase; }
+.cm-status-text span { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes cm-blink { 50% { opacity: .35; } }
+
+/* Primary action: brand fill, ink text and outline. */
+.cm-donate { flex: none; min-height: 48px; padding: 0 16px; border-radius: 14px; border: 2px solid var(--ink); background: var(--brand); color: var(--ink);
+  font-weight: 900; font-size: 15px; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow); }
+.cm-donate:active { background: var(--brand-press); }
+
+.cm-toggles { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; pointer-events: none; padding: 2px 0; }
+.cm-toggles::-webkit-scrollbar { display: none; }
+.cm-toggle { --tc: #64748b; flex: none; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 2px solid var(--ink);
+  background: var(--milk); color: var(--ink); font-weight: 800; font-size: 14px; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow); }
+.cm-toggle i { width: 10px; height: 10px; border-radius: 50%; background: var(--tc); opacity: .35; box-shadow: 0 0 0 2px var(--milk); }
+/* ON = brand fill (state is shown by fill AND a full-strength dot, never by colour alone). OFF = milk, dimmed text. */
+.cm-toggle[aria-pressed="false"] { color: var(--muted); border-color: var(--muted); box-shadow: none; }
+.cm-toggle[aria-pressed="true"] { background: var(--brand); }
+.cm-toggle[aria-pressed="true"] i { opacity: 1; }
+
+.cm-ctrl { position: absolute; z-index: 1000; right: 10px; bottom: calc(var(--sheet-h) + 14px); display: flex; flex-direction: column; gap: 8px;
+  transition: bottom 280ms cubic-bezier(.2,.8,.2,1), opacity 160ms; }
+.cm-ctrl[data-hidden="true"] { opacity: 0; pointer-events: none; }
+/* Map controls are the "ink" accent: solid ink, milk icons. */
+.cm-btn { width: 48px; height: 48px; border-radius: 14px; background: var(--ink); border: 2px solid var(--ink);
+  color: var(--milk); display: grid; place-items: center; box-shadow: var(--shadow); padding: 0; }
+.cm-btn:active { background: #2A3541; }
+.cm-btn[aria-pressed="true"] { color: var(--brand); border-color: var(--brand); }
+.cm-btn[disabled] { opacity: .5; }
+.cm-btn:focus-visible { outline-color: var(--brand) !important; box-shadow: 0 0 0 5px var(--ink) !important; }
+.cm-zoom { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+.cm-zoom .cm-btn { border-radius: 0; box-shadow: none; }
+.cm-zoom .cm-btn + .cm-btn { border-top: 1px solid #2A3541; }
+
+.cm-hint, .cm-toast { position: absolute; z-index: 1000; left: 10px; max-width: calc(100% - 80px); padding: 8px 12px; border-radius: 12px;
+  background: var(--milk); color: var(--ink); border: 2px solid var(--ink); font-size: 13px; font-weight: 700; box-shadow: var(--shadow); }
+.cm-hint { bottom: calc(var(--sheet-h) + 34px); transition: bottom 280ms cubic-bezier(.2,.8,.2,1); border-left: 8px solid var(--brand); }
+.cm-toast { top: calc(env(safe-area-inset-top, 0px) + 124px); left: 50%; transform: translateX(-50%); width: max-content; text-align: center; border-left: 8px solid var(--brand); }
+
+/* attribution must stay legible and clear of the sheet */
+.cm-root .leaflet-bottom { bottom: var(--sheet-h); transition: bottom 280ms cubic-bezier(.2,.8,.2,1); }
+.cm-root .leaflet-control-attribution { background: rgba(250,246,236,.9); color: var(--ink-muted); font-size: 10px; }
+.cm-root .leaflet-control-attribution a { color: var(--ink); text-decoration: underline; }
+
+/* ---------- bottom sheet / side panel ---------- */
+.cm-sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1100; display: flex; flex-direction: column;
+  background: var(--panel); border-radius: 22px 22px 0 0; border-top: 3px solid var(--ink);
+  box-shadow: 0 -10px 30px rgba(16,24,32,.28); transform: translate3d(0, 100%, 0); }
+.cm-sheet[data-dragging="false"] { transition: transform 280ms cubic-bezier(.2,.8,.2,1); }
+/* The header band is brand orange: it is always on screen (peek), so it carries the 30%. Everything in it is ink. */
+.cm-sheet-head { flex: none; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab;
+  background: var(--brand); color: var(--ink); border-radius: 19px 19px 0 0; border-bottom: 3px solid var(--ink);
+  padding: 0 14px calc(10px + env(safe-area-inset-bottom, 0px) * 0); }
+.cm-grab { display: block; width: 44px; height: 5px; border-radius: 3px; background: rgba(16,24,32,.75); margin: 10px auto; }
+.cm-sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.cm-sheet[data-snap="peek"] .cm-sheet-body { visibility: hidden; }
+
+.cm-side { width: 380px; max-width: 42vw; flex: none; height: 100%; display: flex; flex-direction: column; order: -1;
+  background: var(--panel); border-right: 3px solid var(--ink); z-index: 1100; }
+.cm-side-head { flex: none; padding: 14px; background: var(--brand); color: var(--ink); border-bottom: 3px solid var(--ink); }
+.cm-side-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-top: 12px; }
+@media (min-width: 768px) {
+  .cm-root { display: flex; }
+  .cm-mapwrap { position: relative; inset: auto; flex: 1; min-width: 0; height: 100%; }
+  .cm-ctrl { bottom: 26px; }
+  .cm-hint { bottom: 34px; }
+}
+
+/* ---------- panel content ---------- */
+.cm-pad { padding: 12px 14px 18px; }
+.cm-peek { display: flex; gap: 8px; align-items: stretch; }
+/* Count tiles sit on the orange band: milk tile, ink numerals, and a status-coloured bar + text label. */
+.cm-count { flex: 1; --c: #fff; border-radius: 12px; padding: 0 4px 5px; text-align: center; background: var(--milk); color: var(--ink);
+  border: 2px solid var(--ink); overflow: hidden; }
+/* Status bar is framed in ink: "Warning" orange is nearly identical to the brand band behind the tiles and must not merge into it. */
+.cm-count::before { content: ""; display: block; height: 9px; background: var(--c); border-bottom: 2px solid var(--ink); margin: 0 -4px 5px; }
+.cm-count b { display: block; font-size: 20px; line-height: 1.1; color: var(--ink); }
+.cm-count span { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-muted); }
+.cm-peek-sel { flex: 1; min-width: 0; padding: 4px 2px; }
+.cm-peek-sel b { display: block; font-size: 17px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.cm-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; margin: 4px 0 12px; }
+.cm-tab { min-height: 46px; border-radius: 11px; background: transparent; border: 0; color: var(--ink-muted); font-weight: 800; font-size: 14px; }
+.cm-tab[aria-selected="true"] { background: var(--brand); color: var(--ink); box-shadow: inset 0 0 0 2px var(--ink); }
+.cm-tab small { margin-left: 4px; font-size: 12px; opacity: .85; }
+
+.cm-list { display: flex; flex-direction: column; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.cm-row { width: 100%; min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px;
+  background: var(--panel2); border: 2px solid var(--line); color: inherit; text-align: left; }
+.cm-row:active { background: var(--line); }
+.cm-row[aria-current="true"] { border-color: var(--ink); box-shadow: inset 6px 0 0 var(--brand); }
+.cm-row-icon { --ic: #475569; flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--ic); border: 2px solid var(--ink); }
+.cm-row-main { flex: 1; min-width: 0; }
+.cm-row-title { font-weight: 800; font-size: 15px; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cm-row-sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.cm-dist { flex: none; font-weight: 900; font-size: 14px; color: var(--good); background: rgba(22,101,52,.12); padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+.cm-empty { color: var(--muted); font-size: 14px; line-height: 1.5; padding: 12px 4px; }
+.cm-linkbtn { min-height: 44px; border: 2px solid var(--ink); background: var(--milk); color: var(--ink); border-radius: 12px; padding: 0 14px; font-weight: 800; margin-bottom: 10px; }
+.cm-linkbtn:active { background: var(--brand); }
+
+.cm-bar { height: 10px; border-radius: 5px; background: var(--line); border: 1px solid var(--ink); overflow: hidden; margin-top: 6px; }
+.cm-bar > i { display: block; height: 100%; width: var(--w, 0%); background: var(--bc, #22c55e); }
+
+/* Status badges: ink text on the status colour (4.8:1 or better) with an ink outline so they read as data, never as brand chrome. */
+.cm-badge { --bc: #64748b; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  font-weight: 900; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); background: var(--bc); border: 2px solid var(--ink); }
+.cm-badge[data-s="danger"] { --bc: #ef4444; } .cm-badge[data-s="warning"] { --bc: #f97316; }
+.cm-badge[data-s="caution"] { --bc: #eab308; } .cm-badge[data-s="safe"], .cm-badge[data-s="open"] { --bc: #22c55e; }
+.cm-badge[data-s="full"] { --bc: #f59e0b; } .cm-badge[data-s="closed"] { --bc: #94a3b8; }
+
+.cm-detail { background: var(--panel2); border: 2px solid var(--ink); border-radius: 18px; padding: 14px; margin-bottom: 12px; }
+.cm-detail-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cm-detail h2 { margin: 8px 0 4px; font-size: 21px; line-height: 1.2; font-weight: 900; }
+.cm-detail p { margin: 6px 0 0; line-height: 1.5; font-size: 15px; }
+.cm-meta { color: var(--muted); font-size: 13px; }
+.cm-meta a, .cm-detail a:not(.cm-action) { color: var(--ink); font-weight: 800; text-decoration: underline; text-decoration-color: var(--brand); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+.cm-close { width: 44px; height: 44px; border-radius: 12px; background: var(--ink); border: 2px solid var(--ink); color: var(--milk); display: grid; place-items: center; padding: 0; }
+.cm-close:focus-visible { outline-color: var(--brand) !important; box-shadow: 0 0 0 5px var(--ink) !important; }
+.cm-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.cm-action { min-height: 52px; border-radius: 14px; font-weight: 900; font-size: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  text-decoration: none; border: 2px solid var(--ink); color: var(--ink); background: var(--brand); }
+.cm-action:active { background: var(--brand-press); }
+.cm-action.secondary { background: var(--ink); color: var(--milk); }
+.cm-action.secondary:active { background: #2A3541; }
+.cm-action.secondary:focus-visible { outline-color: var(--brand); box-shadow: 0 0 0 5px var(--ink); }
+.cm-action:only-child { grid-column: 1 / -1; }
+.cm-fac { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.cm-fac span { background: var(--milk); border: 1.5px solid var(--ink-muted); border-radius: 999px; padding: 5px 10px; font-size: 13px; font-weight: 700; }
+.cm-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 13px; color: var(--muted); margin: 0 0 12px; }
+.cm-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.cm-legend i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); border: 1.5px solid var(--ink); }
+
+/* ---------- map markers ---------- */
+.cm-icon { background: none; border: 0; }
+.hz { --c: #ef4444; --dur: 1.6s; position: relative; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; }
+.hz-warning { --c: #f97316; --dur: 2.4s; }
+.hz-caution { --c: #eab308; --dur: 3.2s; }
+.hz-core { position: relative; z-index: 2; width: 26px; height: 26px; border-radius: 50%; background: var(--c); border: 2px solid #fff;
+  display: grid; place-items: center; box-shadow: 0 0 0 2px rgba(16,24,32,.7), 0 0 14px var(--c); transition: transform 120ms; }
+.hz-ring { position: absolute; inset: 7px; border-radius: 50%; background: var(--c); opacity: 0; transform: scale(.6); animation: hz-pulse var(--dur) ease-out infinite; }
+.hz-ring2 { animation-delay: calc(var(--dur) / 2); }
+.hz-selected .hz-core { transform: scale(1.3); box-shadow: 0 0 0 3px var(--ring), 0 0 18px var(--c); }
+@keyframes hz-pulse { 0% { transform: scale(.6); opacity: .6; } 100% { transform: scale(2.2); opacity: 0; } }
+
+.cp { position: relative; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; }
+.cp-pin { width: 34px; height: 34px; border-radius: 11px; background: #16a34a; border: 2px solid #fff; display: grid; place-items: center;
+  box-shadow: 0 0 0 1.5px var(--ink), 0 2px 8px rgba(16,24,32,.5); transition: transform 120ms; }
+.cp-closed .cp-pin { background: #64748b; }
+.cp-selected .cp-pin { transform: scale(1.22); box-shadow: 0 0 0 3px var(--ring), 0 2px 10px rgba(16,24,32,.6); }
+.cp-tag { position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); background: #b91c1c; color: #fff; font-size: 9px; font-weight: 900;
+  letter-spacing: .05em; padding: 1px 5px; border-radius: 6px; border: 1px solid #fff; }
+.cp-tag-closed { background: #475569; }
+
+.cl { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: 16px;
+  border: 2px solid #fff; cursor: pointer; }
+.cl-hot { background: #dc2626; box-shadow: 0 0 0 5px rgba(239,68,68,.35), 0 0 16px rgba(239,68,68,.7); }
+.cl-hot[data-s="warning"] { background: #ea580c; box-shadow: 0 0 0 5px rgba(249,115,22,.35), 0 0 16px rgba(249,115,22,.7); }
+.cl-hot[data-s="caution"] { background: #ca8a04; box-shadow: 0 0 0 5px rgba(234,179,8,.35); }
+.cl-camp { background: #16a34a; box-shadow: 0 0 0 5px rgba(34,197,94,.3); }
+
+/* District labels: default is the light basemap (ink text, milk halo); the dark basemap flips it. */
+.dl { transform: translate(-50%, -50%); white-space: nowrap; pointer-events: none; color: var(--ink); font-size: 12px; font-weight: 800; letter-spacing: .03em;
+  text-shadow: 0 0 3px var(--milk), 0 0 6px var(--milk), 0 0 10px var(--milk); }
+.dl-danger { color: #991b1b; } .dl-warning { color: #9a3412; } .dl-caution { color: #854d0e; }
+.dl-up { font-size: 11px; font-weight: 700; color: var(--ink-muted); }
+.cm-root[data-theme="dark"] .dl { color: #f8fafc; text-shadow: 0 0 3px #000, 0 0 6px #000, 0 0 10px #000; }
+.cm-root[data-theme="dark"] .dl-danger { color: #fecaca; } .cm-root[data-theme="dark"] .dl-warning { color: #fed7aa; } .cm-root[data-theme="dark"] .dl-caution { color: #fef08a; }
+.cm-root[data-theme="dark"] .dl-up { color: #cbd5e1; }
+
+.ud { width: 20px; height: 20px; border-radius: 50%; background: #3b82f6; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(59,130,246,.3); }
+
+/* district polygons (SVG renderer so CSS classes apply) */
+.district-shape { transition: fill-opacity 160ms ease; cursor: pointer; }
+.district-danger { animation: d-pulse-danger 1.8s ease-in-out infinite; }
+.district-warning { animation: d-pulse-warning 2.6s ease-in-out infinite; }
+@keyframes d-pulse-danger { 0%, 100% { fill-opacity: .24; } 50% { fill-opacity: .62; } }
+@keyframes d-pulse-warning { 0%, 100% { fill-opacity: .2; } 50% { fill-opacity: .5; } }
+
+/* pause every animation while the user pans/zooms: keeps gestures at 60fps on low-end phones */
+.cm-moving .hz-ring, .cm-moving .district-danger, .cm-moving .district-warning, .cm-moving .cm-status-dot { animation-play-state: paused; }
+
+.cm-map .leaflet-tooltip { background: var(--ink); color: var(--milk); border: 1px solid var(--brand); border-radius: 8px; font-weight: 800; box-shadow: var(--shadow); }
+.cm-map .leaflet-tooltip-top:before { border-top-color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-sheet[data-dragging="false"], .cm-ctrl, .cm-hint, .cm-root .leaflet-bottom { transition: none; }
+  .hz-ring, .district-danger, .district-warning, .cm-status-dot { animation: none !important; }
+  .hz-ring { opacity: .25; transform: scale(1.4); }
+}
+
+.cm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.cm-distline { color: var(--good); font-weight: 800; font-size: 14px; margin: 6px 0 0; }
